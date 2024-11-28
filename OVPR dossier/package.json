@@ -1,0 +1,10 @@
+{ 
+"name": "ovpr", 
+"version": "1.0.0", 
+"scripts": { 
+"start-backend": "nodemon backend/index.js", 
+"start-dashboard": "npm start --prefix dashboard", 
+"start-frontend": "npm start --prefix frontend" 
+}, 
+"dependencies": {} 
+} 
