@@ -13,6 +13,8 @@ import {
   Language as LanguageIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import NotificationCenter from '../Notifications/NotificationCenter';
+import Tooltip from '@mui/material/Tooltip';
 
 const drawerWidth = 240;
 
@@ -100,12 +102,23 @@ const Layout = ({ children }) => {
             <MenuIcon />
           </IconButton>
           <Box sx={{ flexGrow: 1 }} />
-          <IconButton color="primary">
-            <NotificationsIcon />
-          </IconButton>
-          <IconButton color="primary">
-            <LanguageIcon />
-          </IconButton>
+          <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
+            <NotificationCenter 
+              onNotificationClick={(notification) => {
+                if (notification.actionLink) {
+                  navigate(notification.actionLink, { state: notification.actionData });
+                }
+              }} 
+            />
+            <Tooltip title="Paramètres du compte">
+              <IconButton color="primary">
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+            <IconButton color="primary">
+              <LanguageIcon />
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
 

@@ -1,68 +1,106 @@
 import React from 'react';
-import { Card, CardContent, Typography } from '@mui/material';
+import { Paper, Typography, Box } from '@mui/material';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer
 } from 'recharts';
 
-const COLORS = ['#6B46C1', '#ECC94B', '#48BB78', '#F56565'];
+const COLORS = ['#6B46C1', '#805AD5', '#D69E2E', '#ECC94B'];
 
-export const BarChartCard = ({ title, data }) => {
-  return (
-    <Card sx={{ height: '100%', minHeight: 400 }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          {title}
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <Paper
+        sx={{
+          p: 1.5,
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          border: '1px solid #E2E8F0'
+        }}
+      >
+        <Typography variant="body2" color="textPrimary">
+          {`${label}: ${payload[0].value}`}
         </Typography>
-        <ResponsiveContainer width="100%" height={350}>
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="value" fill="#6B46C1" />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  );
+      </Paper>
+    );
+  }
+  return null;
 };
 
-export const PieChartCard = ({ title, data }) => {
-  return (
-    <Card sx={{ height: '100%', minHeight: 400 }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          {title}
-        </Typography>
-        <ResponsiveContainer width="100%" height={350}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              outerRadius={130}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  );
-};
+export const BarChartCard = ({ title, data }) => (
+  <Paper
+    elevation={3}
+    sx={{
+      p: 3,
+      height: 400,
+      backgroundColor: 'white',
+      borderRadius: 2,
+      transition: 'box-shadow 0.3s',
+      '&:hover': {
+        boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+      }
+    }}
+  >
+    <Typography variant="h6" gutterBottom sx={{ color: '#2D3748', mb: 3 }}>
+      {title}
+    </Typography>
+    <ResponsiveContainer width="100%" height="85%">
+      <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+        <XAxis dataKey="name" stroke="#718096" />
+        <YAxis stroke="#718096" />
+        <Tooltip content={<CustomTooltip />} />
+        <Legend />
+        <Bar dataKey="value" fill="#6B46C1" radius={[4, 4, 0, 0]}>
+          {data?.map((entry, index) => (
+            <Cell key={index} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  </Paper>
+);
+
+export const PieChartCard = ({ title, data }) => (
+  <Paper
+    elevation={3}
+    sx={{
+      p: 3,
+      height: 400,
+      backgroundColor: 'white',
+      borderRadius: 2,
+      transition: 'box-shadow 0.3s',
+      '&:hover': {
+        boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+      }
+    }}
+  >
+    <Typography variant="h6" gutterBottom sx={{ color: '#2D3748', mb: 3 }}>
+      {title}
+    </Typography>
+    <ResponsiveContainer width="100%" height="85%">
+      <PieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          innerRadius={60}
+          outerRadius={80}
+          paddingAngle={5}
+          dataKey="value"
+        >
+          {data?.map((entry, index) => (
+            <Cell key={index} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip content={<CustomTooltip />} />
+        <Legend
+          layout="vertical"
+          verticalAlign="middle"
+          align="right"
+          wrapperStyle={{ paddingLeft: '20px' }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
+  </Paper>
+);

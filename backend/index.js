@@ -1,23 +1,32 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
+const path = require('path');
+const http = require('http');
+const bodyParser = require('body-parser');
+
+// Services
+const notificationService = require('./services/notificationService');
 
 // Import des routes
 const userRoutes = require('./routes/userRoutes');
 const annonceRoutes = require('./routes/annonceRoutes');
 const signalementRoutes = require('./routes/signalementRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const statistiquesRoutes = require('./routes/statistiquesRoutes');
+const adminRoutes = require('./routes/admin');
+const notificationsRoutes = require('./routes/notifications');
+const chatRoomsRoutes = require('./routes/chatRooms');
+const lawEnforcementRoutes = require('./routes/lawEnforcement');
+const statisticsRoutes = require('./routes/statisticsRoutes');
 
 dotenv.config();
 const app = express();
+const server = http.createServer(app);
 
 // Logger middleware
 app.use((req, res, next) => {
     console.log(`📨 ${req.method} ${req.url}`);
-    console.log('Headers:', req.headers); // Ajout des logs pour les headers
+    console.log('Headers:', req.headers);
     next();
 });
 
@@ -31,22 +40,14 @@ app.use(cors({
     optionsSuccessStatus: 204
 }));
 
-// Middleware pour gérer les en-têtes CORS manuellement si nécessaire
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:3001');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    if (req.method === 'OPTIONS') {
-        return res.status(204).end();
-    }
-    next();
-});
-
 app.use(bodyParser.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Connection à MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ovpr', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
 .then(() => console.log('✅ Connecté à MongoDB Atlas avec succès!'))
 .catch(err => console.error('❌ Erreur de connexion MongoDB:', err));
 
@@ -54,32 +55,25 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use('/api/users', userRoutes);
 app.use('/api/annonces', annonceRoutes);
 app.use('/api/signalements', signalementRoutes);
-app.use('/api/statistiques', statistiquesRoutes);
 
 // Routes Admin
-app.use('/admin/auth', adminRoutes);
+app.use('/admin', adminRoutes);
 app.use('/admin/annonces', annonceRoutes);
 app.use('/admin/signalements', signalementRoutes);
-app.use('/admin/statistiques', statistiquesRoutes);
+app.use('/admin/statistiques', statisticsRoutes);
+app.use('/admin/notifications', notificationsRoutes);
+app.use('/admin/chat', chatRoomsRoutes);
+app.use('/law-enforcement', lawEnforcementRoutes);
 
-// Route de test
-app.get('/test', (req, res) => {
-    res.json({ message: 'API fonctionne correctement' });
-});
-
-// Gestion des routes non trouvées
-app.use((req, res) => {
-    console.log(`❌ Route non trouvée: ${req.method} ${req.url}`);
-    res.status(404).json({ message: `Route non trouvée: ${req.method} ${req.url}` });
-});
-
-// Gestion des erreurs
+// Gestion des erreurs globale
 app.use((err, req, res, next) => {
-    console.error('❌ Erreur:', err.stack);
-    res.status(500).json({ message: 'Une erreur est survenue!' });
+    console.error(err.stack);
+    res.status(500).send('Une erreur est survenue!');
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`🚀 Serveur démarré sur le port ${PORT}`);
 });
+
+module.exports = { app, server };

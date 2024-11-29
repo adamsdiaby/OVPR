@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Container,
-  TextField,
   Button,
+  TextField,
   Typography,
+  Container,
   Paper,
-  Alert,
-  CircularProgress,
   Checkbox,
   FormControlLabel,
-  Divider
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -21,9 +20,9 @@ const Login = () => {
     email: '',
     password: ''
   });
+  const [acceptResponsibility, setAcceptResponsibility] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [responsibilityAccepted, setResponsibilityAccepted] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -34,21 +33,32 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!responsibilityAccepted) {
-      setError('Veuillez confirmer que vous avez pris conscience de vos responsabilités');
+    if (!acceptResponsibility) {
+      setError('Veuillez accepter la déclaration de responsabilité');
       return;
     }
 
-    setError('');
     setLoading(true);
+    setError('');
 
     try {
-      const response = await axios.post('http://localhost:3000/admin/auth/login', formData);
-      localStorage.setItem('adminToken', response.data.token);
-      navigate('/admin/dashboard');
+      const response = await axios.post('http://localhost:3000/admin/login', formData);
+      const { token, admin } = response.data;
+      
+      localStorage.setItem('adminToken', token);
+      localStorage.setItem('adminRole', admin.role);
+      localStorage.setItem('adminPermissions', JSON.stringify(admin.permissions));
+      localStorage.setItem('adminId', admin._id);
+      
+      // Redirection basée sur le rôle et le statut
+      if (admin.status === 'en_attente') {
+        navigate('/pending-approval');
+      } else if (admin.role === 'super_admin') {
+        navigate('/admin-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
-      console.error('Erreur de connexion:', error);
       setError(
         error.response?.data?.message ||
         'Une erreur est survenue lors de la connexion'
@@ -59,15 +69,15 @@ const Login = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        background: 'linear-gradient(45deg, #6B46C1 30%, #ECC94B 90%)',
-      }}
-    >
-      <Container maxWidth="sm">
+    <Container component="main" maxWidth="xs">
+      <Box
+        sx={{
+          marginTop: 8,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
         <Paper
           elevation={3}
           sx={{
@@ -75,68 +85,22 @@ const Login = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            width: '100%',
+            background: 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)',
           }}
         >
           <Typography
             component="h1"
             variant="h4"
-            sx={{ mb: 4, color: '#6B46C1', fontWeight: 'bold' }}
-          >
-            OVPR Admin Dashboard
-          </Typography>
-
-          <Typography variant="h6" color="primary" gutterBottom sx={{ mb: 2 }}>
-            Avis aux Administrateurs
-          </Typography>
-
-          <Typography variant="body1" sx={{ mb: 2, textAlign: 'justify' }}>
-            En tant qu'administrateur, vous jouez un rôle essentiel dans le bon fonctionnement 
-            et la sécurité de cette application.
-          </Typography>
-
-          <Typography variant="subtitle1" color="error" sx={{ mb: 2, fontWeight: 'bold' }}>
-            Prenez conscience que :
-          </Typography>
-
-          <Box sx={{ width: '100%', mb: 2 }}>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              • Chaque action effectuée ici peut avoir un impact direct sur les utilisateurs et l'application.
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              • Une erreur ou une manipulation incorrecte pourrait entraîner des pertes de données, 
-              des interruptions de service ou des atteintes à la sécurité.
-            </Typography>
-          </Box>
-
-          <Typography variant="subtitle1" color="primary" sx={{ mb: 2, fontWeight: 'bold' }}>
-            Nous vous demandons de :
-          </Typography>
-
-          <Box sx={{ width: '100%', mb: 3 }}>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              • Travailler avec la plus grande attention.
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              • Vérifier vos actions avant de les valider.
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              • Consulter la documentation ou le support technique en cas de doute.
-            </Typography>
-          </Box>
-
-          <Typography 
-            variant="body1" 
-            sx={{ 
-              mb: 3, 
-              fontStyle: 'italic',
-              color: 'primary.main',
-              textAlign: 'center'
+            sx={{
+              mb: 3,
+              color: '#2D3748',
+              fontWeight: 'bold',
+              textAlign: 'center',
             }}
           >
-            "Un bon administrateur est celui qui agit avec prudence et précision, car chaque détail compte."
+            Espace Administrateur
           </Typography>
-
-          <Divider sx={{ width: '100%', mb: 3 }} />
 
           {error && (
             <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
@@ -144,13 +108,13 @@ const Login = () => {
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
             <TextField
               margin="normal"
               required
               fullWidth
               id="email"
-              label="Email"
+              label="Adresse email"
               name="email"
               autoComplete="email"
               autoFocus
@@ -175,14 +139,15 @@ const Login = () => {
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={responsibilityAccepted}
-                  onChange={(e) => setResponsibilityAccepted(e.target.checked)}
+                  checked={acceptResponsibility}
+                  onChange={(e) => setAcceptResponsibility(e.target.checked)}
                   color="primary"
                 />
               }
               label={
-                <Typography variant="body2" color="text.secondary">
-                  Je comprends que toute manipulation inappropriée peut avoir de graves conséquences
+                <Typography variant="body2" sx={{ color: '#4A5568' }}>
+                  Je comprends mes responsabilités en tant qu'administrateur et m'engage à respecter
+                  la confidentialité des données.
                 </Typography>
               }
               sx={{ mb: 2 }}
@@ -192,7 +157,6 @@ const Login = () => {
               type="submit"
               fullWidth
               variant="contained"
-              disabled={loading || !responsibilityAccepted}
               sx={{
                 mt: 2,
                 mb: 2,
@@ -201,22 +165,19 @@ const Login = () => {
                 '&:hover': {
                   backgroundColor: '#553C9A',
                 },
-                '&.Mui-disabled': {
-                  backgroundColor: '#9F7AEA',
-                  color: 'white',
-                }
               }}
+              disabled={loading || !acceptResponsibility}
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />
               ) : (
-                'Je comprends et je me connecte'
+                'Se connecter'
               )}
             </Button>
           </Box>
         </Paper>
-      </Container>
-    </Box>
+      </Box>
+    </Container>
   );
 };
 

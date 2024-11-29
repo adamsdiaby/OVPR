@@ -1,104 +1,89 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import theme from './theme';
-import Layout from './components/Layout/Layout';
 import Login from './pages/Login/Login';
 import Dashboard from './pages/Dashboard/Dashboard';
-import Annonces from './pages/Annonces/Annonces';
-import Signalements from './pages/Signalements/Signalements';
-import Statistiques from './pages/Statistiques/Statistiques';
+import AdminManagement from './pages/AdminManagement/AdminManagement';
+import PendingApproval from './pages/PendingApproval/PendingApproval';
+import LawEnforcementDashboard from './pages/LawEnforcement/LawEnforcementDashboard';
+import ChatPage from './pages/Chat/ChatPage';
+import Layout from './components/Layout/Layout';
+import { ChatProvider } from './contexts/ChatContext';
 
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
+// Composant de route privée
+const PrivateRoute = ({ children, roles = [] }) => {
   const isAuthenticated = localStorage.getItem('adminToken');
-  return isAuthenticated ? children : <Navigate to="/admin/login" />;
+  const userRole = localStorage.getItem('adminRole');
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (roles.length > 0 && !roles.includes(userRole)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return children;
 };
 
-// Placeholder components for remaining routes
-const Utilisateurs = () => <div>Utilisateurs Content</div>;
-const Configuration = () => <div>Configuration Content</div>;
-
-function App() {
+const App = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
+    <Router>
+      <ChatProvider>
         <Routes>
-          <Route path="/admin/login" element={<Login />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/pending-approval" element={<PendingApproval />} />
           
+          {/* Routes protégées */}
           <Route
-            path="/admin/dashboard"
+            path="/"
             element={
-              <ProtectedRoute>
+              <PrivateRoute>
                 <Layout>
                   <Dashboard />
                 </Layout>
-              </ProtectedRoute>
+              </PrivateRoute>
             }
           />
           
           <Route
-            path="/admin/annonces"
+            path="/admin-management"
             element={
-              <ProtectedRoute>
+              <PrivateRoute roles={['super_admin', 'admin']}>
                 <Layout>
-                  <Annonces />
+                  <AdminManagement />
                 </Layout>
-              </ProtectedRoute>
+              </PrivateRoute>
             }
           />
           
           <Route
-            path="/admin/signalements"
+            path="/law-enforcement"
             element={
-              <ProtectedRoute>
+              <PrivateRoute roles={['police', 'gendarmerie']}>
                 <Layout>
-                  <Signalements />
+                  <LawEnforcementDashboard />
                 </Layout>
-              </ProtectedRoute>
+              </PrivateRoute>
             }
           />
           
           <Route
-            path="/admin/utilisateurs"
+            path="/chat"
             element={
-              <ProtectedRoute>
+              <PrivateRoute>
                 <Layout>
-                  <Utilisateurs />
+                  <ChatPage />
                 </Layout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/admin/statistiques"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Statistiques />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/admin/configuration"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Configuration />
-                </Layout>
-              </ProtectedRoute>
+              </PrivateRoute>
             }
           />
 
-          <Route path="/" element={<Navigate to="/admin/login" replace />} />
+          {/* Route par défaut */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </Router>
-    </ThemeProvider>
+      </ChatProvider>
+    </Router>
   );
-}
+};
 
 export default App;

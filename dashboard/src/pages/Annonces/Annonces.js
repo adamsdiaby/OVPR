@@ -1,182 +1,163 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Container,
+  Grid,
   Box,
-  Typography,
   TextField,
   InputAdornment,
-  Button,
-  Grid,
-  Card,
-  CardContent,
+  Typography,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
+  Autocomplete
 } from '@mui/material';
-import { Search as SearchIcon, Add as AddIcon } from '@mui/icons-material';
+import { Search as SearchIcon } from '@mui/icons-material';
+import AnnonceCard from '../../components/Annonces/AnnonceCard';
 import axios from 'axios';
-import AnnonceTable from '../../components/Annonces/AnnonceTable';
 
 const Annonces = () => {
   const [annonces, setAnnonces] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('tous');
-  const [filterStatus, setFilterStatus] = useState('tous');
+  const [filtres, setFiltres] = useState({
+    recherche: '',
+    categorie: 'tous',
+    status: 'tous'
+  });
 
   useEffect(() => {
+    const fetchAnnonces = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/admin/annonces', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('adminToken')}`
+          }
+        });
+        setAnnonces(response.data);
+      } catch (error) {
+        console.error('Erreur lors du chargement des annonces:', error);
+      }
+    };
+
     fetchAnnonces();
   }, []);
 
-  const fetchAnnonces = async () => {
+  const handleValidate = async (id) => {
     try {
-      const response = await axios.get('http://localhost:3000/admin/annonces', {
+      await axios.put(`http://localhost:3000/admin/annonces/${id}/valider`, {}, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
-        },
-      });
-      setAnnonces(response.data);
-    } catch (error) {
-      console.error('Erreur lors de la récupération des annonces:', error);
-    }
-  };
-
-  const handleEdit = async (annonce) => {
-    // Implémenter la logique de modification
-    console.log('Modifier annonce:', annonce);
-  };
-
-  const handleDelete = async (annonce) => {
-    try {
-      await axios.delete(`http://localhost:3000/admin/annonces/${annonce.id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
-        },
-      });
-      fetchAnnonces();
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
-    }
-  };
-
-  const handleValidate = async (annonce) => {
-    try {
-      await axios.put(
-        `http://localhost:3000/admin/annonces/${annonce.id}/validate`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
-          },
+          Authorization: `Bearer ${localStorage.getItem('adminToken')}`
         }
+      });
+      // Rafraîchir la liste
+      const updatedAnnonces = annonces.map(annonce => 
+        annonce.id === id ? { ...annonce, status: 'validé' } : annonce
       );
-      fetchAnnonces();
+      setAnnonces(updatedAnnonces);
     } catch (error) {
       console.error('Erreur lors de la validation:', error);
     }
   };
 
-  const handleReject = async (annonce) => {
+  const handleReject = async (id) => {
     try {
-      await axios.put(
-        `http://localhost:3000/admin/annonces/${annonce.id}/reject`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
-          },
+      await axios.put(`http://localhost:3000/admin/annonces/${id}/rejeter`, {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('adminToken')}`
         }
+      });
+      // Rafraîchir la liste
+      const updatedAnnonces = annonces.map(annonce => 
+        annonce.id === id ? { ...annonce, status: 'rejeté' } : annonce
       );
-      fetchAnnonces();
+      setAnnonces(updatedAnnonces);
     } catch (error) {
       console.error('Erreur lors du rejet:', error);
     }
   };
 
-  const filteredAnnonces = annonces.filter((annonce) => {
-    const matchesSearch = annonce.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      annonce.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      annonce.utilisateur.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesType = filterType === 'tous' || annonce.type === filterType;
-    const matchesStatus = filterStatus === 'tous' || annonce.statut === filterStatus;
+  const handleEdit = (id) => {
+    // Implémenter la logique d'édition
+    console.log('Édition de l\'annonce:', id);
+  };
 
-    return matchesSearch && matchesType && matchesStatus;
+  const filteredAnnonces = annonces.filter(annonce => {
+    const matchRecherche = annonce.titre.toLowerCase().includes(filtres.recherche.toLowerCase()) ||
+                          annonce.numeroSerie?.toLowerCase().includes(filtres.recherche.toLowerCase());
+    const matchCategorie = filtres.categorie === 'tous' || annonce.categorie === filtres.categorie;
+    const matchStatus = filtres.status === 'tous' || annonce.status === filtres.status;
+    
+    return matchRecherche && matchCategorie && matchStatus;
   });
 
   return (
-    <Box>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4">Gestion des Annonces</Typography>
-        <Button
-          variant="contained"
-          color="secondary"
-          startIcon={<AddIcon />}
-        >
-          Nouvelle Annonce
-        </Button>
-      </Box>
+    <Container maxWidth="xl">
+      <Box sx={{ py: 4 }}>
+        <Typography variant="h4" sx={{ mb: 4, color: '#2D3748', fontWeight: 'bold' }}>
+          Gestion des Annonces
+        </Typography>
 
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                variant="outlined"
-                placeholder="Rechercher..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                }}
+        {/* Filtres */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Rechercher par titre, numéro de série..."
+              value={filtres.recherche}
+              onChange={(e) => setFiltres({ ...filtres, recherche: e.target.value })}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <FormControl fullWidth>
+              <Select
+                value={filtres.categorie}
+                onChange={(e) => setFiltres({ ...filtres, categorie: e.target.value })}
+              >
+                <MenuItem value="tous">Toutes les catégories</MenuItem>
+                <MenuItem value="telephone">Téléphones</MenuItem>
+                <MenuItem value="ordinateur">Ordinateurs</MenuItem>
+                <MenuItem value="bijoux">Bijoux</MenuItem>
+                <MenuItem value="documents">Documents</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <FormControl fullWidth>
+              <Select
+                value={filtres.status}
+                onChange={(e) => setFiltres({ ...filtres, status: e.target.value })}
+              >
+                <MenuItem value="tous">Tous les statuts</MenuItem>
+                <MenuItem value="volé">Volé</MenuItem>
+                <MenuItem value="perdu">Perdu</MenuItem>
+                <MenuItem value="retrouvé">Retrouvé</MenuItem>
+                <MenuItem value="en_attente">En attente</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+
+        {/* Liste des annonces */}
+        <Grid container spacing={3}>
+          {filteredAnnonces.map((annonce) => (
+            <Grid item xs={12} sm={6} md={4} key={annonce.id}>
+              <AnnonceCard
+                annonce={annonce}
+                onValidate={handleValidate}
+                onReject={handleReject}
+                onEdit={handleEdit}
               />
             </Grid>
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
-                <Select
-                  value={filterType}
-                  label="Type"
-                  onChange={(e) => setFilterType(e.target.value)}
-                >
-                  <MenuItem value="tous">Tous</MenuItem>
-                  <MenuItem value="perdu">Perdu</MenuItem>
-                  <MenuItem value="volé">Volé</MenuItem>
-                  <MenuItem value="retrouvé">Retrouvé</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel>Statut</InputLabel>
-                <Select
-                  value={filterStatus}
-                  label="Statut"
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                  <MenuItem value="tous">Tous</MenuItem>
-                  <MenuItem value="en_attente">En attente</MenuItem>
-                  <MenuItem value="validé">Validé</MenuItem>
-                  <MenuItem value="rejeté">Rejeté</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-
-      <AnnonceTable
-        annonces={filteredAnnonces}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onValidate={handleValidate}
-        onReject={handleReject}
-      />
-    </Box>
+          ))}
+        </Grid>
+      </Box>
+    </Container>
   );
 };
 
