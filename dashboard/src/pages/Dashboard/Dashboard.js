@@ -1,114 +1,103 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Grid, Box, Typography } from '@mui/material';
-import StatCard from '../../components/Dashboard/StatCard';
-import { BarChartCard, PieChartCard } from '../../components/Dashboard/ChartCard';
-import ActivityChart from './ActivityChart';
-import axios from 'axios';
+import { Box, Grid, Typography, Container } from '@mui/material';
 import {
-  LocalPolice as StolenIcon,
-  SearchOff as LostIcon,
-  FindInPage as FoundIcon,
-  Report as ReportIcon
+  PeopleAlt as PeopleIcon,
+  Announcement as AnnouncementIcon,
+  Report as ReportIcon,
+  Notifications as NotificationsIcon
 } from '@mui/icons-material';
+import StatsWidget from '../../components/Dashboard/StatsWidget';
+import EvolutionCharts from '../AdminDashboard/components/Charts/EvolutionCharts';
+import InteractiveMap from '../AdminDashboard/components/InteractiveMap/InteractiveMap';
+import axios from 'axios';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
-    stolen: 0,
-    lost: 0,
-    found: 0,
-    reports: 0,
-    activityData: [],
-    categoryData: [],
-    statusData: []
+    users: { total: 0, active: 0, change: 0 },
+    annonces: { total: 0, active: 0, change: 0 },
+    signalements: { total: 0, pending: 0, change: 0 },
+    notifications: { total: 0, unread: 0, change: 0 }
   });
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchDashboardStats = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/admin/statistics/overview', {
+        const response = await axios.get('/api/dashboard/stats', {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('adminToken')}`
+            Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
         setStats(response.data);
       } catch (error) {
-        console.error('Erreur lors du chargement des données:', error);
+        console.error('Erreur lors de la récupération des statistiques:', error);
       }
     };
 
-    fetchDashboardData();
-    // Rafraîchir les données toutes les 5 minutes
-    const interval = setInterval(fetchDashboardData, 300000);
-    return () => clearInterval(interval);
+    fetchDashboardStats();
   }, []);
-
-  const statCards = [
-    {
-      title: 'Objets Volés',
-      value: stats.stolen,
-      icon: <StolenIcon />,
-      color: '#6B46C1'
-    },
-    {
-      title: 'Objets Perdus',
-      value: stats.lost,
-      icon: <LostIcon />,
-      color: '#805AD5'
-    },
-    {
-      title: 'Objets Retrouvés',
-      value: stats.found,
-      icon: <FoundIcon />,
-      color: '#ECC94B'
-    },
-    {
-      title: 'Signalements',
-      value: stats.reports,
-      icon: <ReportIcon />,
-      color: '#D69E2E'
-    }
-  ];
 
   return (
     <Container maxWidth="xl">
       <Box sx={{ py: 4 }}>
-        {/* En-tête du tableau de bord */}
-        <Typography 
-          variant="h4" 
-          sx={{ 
-            mb: 4, 
-            color: '#2D3748',
-            fontWeight: 'bold' 
-          }}
-        >
+        <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold' }}>
           Tableau de Bord
         </Typography>
 
-        {/* Cartes de statistiques */}
+        {/* Widgets Statistiques */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          {statCards.map((card, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <StatCard {...card} />
-            </Grid>
-          ))}
+          <Grid item xs={12} sm={6} md={3}>
+            <StatsWidget
+              title="Utilisateurs"
+              value={stats.users.total}
+              icon={PeopleIcon}
+              change={stats.users.change}
+              total={stats.users.total}
+              info="Nombre total d'utilisateurs inscrits"
+              color="primary"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatsWidget
+              title="Annonces"
+              value={stats.annonces.active}
+              icon={AnnouncementIcon}
+              change={stats.annonces.change}
+              total={stats.annonces.total}
+              info="Nombre d'annonces actives"
+              color="success"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatsWidget
+              title="Signalements"
+              value={stats.signalements.pending}
+              icon={ReportIcon}
+              change={stats.signalements.change}
+              total={stats.signalements.total}
+              info="Signalements en attente de traitement"
+              color="warning"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatsWidget
+              title="Notifications"
+              value={stats.notifications.unread}
+              icon={NotificationsIcon}
+              change={stats.notifications.change}
+              total={stats.notifications.total}
+              info="Notifications non lues"
+              color="error"
+            />
+          </Grid>
         </Grid>
 
-        {/* Graphiques */}
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
-            <ActivityChart data={stats.activityData} />
+        {/* Graphiques d'évolution */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} lg={8}>
+            <EvolutionCharts />
           </Grid>
-          <Grid item xs={12} md={4}>
-            <PieChartCard
-              title="Répartition par Catégorie"
-              data={stats.categoryData}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <BarChartCard
-              title="État des Signalements"
-              data={stats.statusData}
-            />
+          <Grid item xs={12} lg={4}>
+            <InteractiveMap />
           </Grid>
         </Grid>
       </Box>

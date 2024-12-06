@@ -1,5 +1,5 @@
 import React from 'react';
-import { Paper, Typography, Box } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -28,19 +28,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export const BarChartCard = ({ title, data }) => (
-  <Paper
-    elevation={3}
-    sx={{
-      p: 3,
-      height: 400,
-      backgroundColor: 'white',
-      borderRadius: 2,
-      transition: 'box-shadow 0.3s',
-      '&:hover': {
-        boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
-      }
-    }}
-  >
+  <Paper sx={{ height: 400, borderRadius: 2 }}>
     <Typography variant="h6" gutterBottom sx={{ color: '#2D3748', mb: 3 }}>
       {title}
     </Typography>
@@ -62,19 +50,7 @@ export const BarChartCard = ({ title, data }) => (
 );
 
 export const PieChartCard = ({ title, data }) => (
-  <Paper
-    elevation={3}
-    sx={{
-      p: 3,
-      height: 400,
-      backgroundColor: 'white',
-      borderRadius: 2,
-      transition: 'box-shadow 0.3s',
-      '&:hover': {
-        boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
-      }
-    }}
-  >
+  <Paper sx={{ height: 400, borderRadius: 2 }}>
     <Typography variant="h6" gutterBottom sx={{ color: '#2D3748', mb: 3 }}>
       {title}
     </Typography>

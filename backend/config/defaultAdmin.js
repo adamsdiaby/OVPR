@@ -3,7 +3,10 @@ const bcrypt = require('bcryptjs');
 const defaultAdmin = {
     email: 'admin@ovpr.fr',
     password: 'Admin@123',
-    role: 'admin'
+    role: 'super_admin',
+    nom: 'Admin',
+    prenom: 'System',
+    status: 'actif'
 };
 
 // Hash du mot de passe par défaut

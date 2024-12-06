@@ -18,31 +18,78 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
-        select: false
-    },
-    phone: {
-        type: String,
         required: true
     },
     role: {
         type: String,
-        enum: ['user', 'admin'],
-        default: 'user',
+        enum: ['utilisateur', 'moderateur', 'admin', 'super_admin'],
+        default: 'utilisateur',
         required: true
     },
     status: {
         type: String,
-        enum: ['active', 'inactive', 'suspended'],
-        default: 'active'
+        enum: ['actif', 'inactif', 'suspendu', 'en_attente'],
+        default: 'en_attente'
+    },
+    phoneNumber: {
+        type: String
     },
     createdAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    lastLogin: {
+        type: Date
+    },
+    // Champs pour la suspension
+    suspensionDate: {
+        type: Date
+    },
+    suspensionReason: {
+        type: String
+    },
+    suspendedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    // Champs pour la réactivation
+    reactivationDate: {
+        type: Date
+    },
+    reactivationNote: {
+        type: String
+    },
+    reactivatedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    // Champs pour la réinitialisation du mot de passe
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
+    // Champs pour la vérification
+    verificationToken: String,
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    // Historique des modifications
+    modificationHistory: [{
+        field: String,
+        oldValue: mongoose.Schema.Types.Mixed,
+        newValue: mongoose.Schema.Types.Mixed,
+        modifiedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        modifiedAt: {
+            type: Date,
+            default: Date.now
+        },
+        reason: String
+    }]
 });
 
-// Hash du mot de passe avant la sauvegarde
+// Hash password before saving
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();
     
@@ -55,7 +102,7 @@ userSchema.pre('save', async function(next) {
     }
 });
 
-// Méthode pour comparer les mots de passe
+// Method to compare password
 userSchema.methods.comparePassword = async function(candidatePassword) {
     try {
         return await bcrypt.compare(candidatePassword, this.password);
@@ -64,4 +111,27 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
     }
 };
 
-module.exports = mongoose.model('User', userSchema);
+// Méthode pour ajouter une entrée à l'historique des modifications
+userSchema.methods.addToModificationHistory = function(field, oldValue, newValue, modifiedBy, reason) {
+    this.modificationHistory.push({
+        field,
+        oldValue,
+        newValue,
+        modifiedBy,
+        reason,
+        modifiedAt: new Date()
+    });
+};
+
+// Méthode pour vérifier si l'utilisateur est actif
+userSchema.methods.isActive = function() {
+    return this.status === 'actif';
+};
+
+// Méthode pour vérifier si l'utilisateur est suspendu
+userSchema.methods.isSuspended = function() {
+    return this.status === 'suspendu';
+};
+
+// Vérifier si le modèle existe déjà
+module.exports = mongoose.models.User || mongoose.model('User', userSchema);

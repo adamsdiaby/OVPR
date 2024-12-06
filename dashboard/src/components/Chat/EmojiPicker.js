@@ -1,26 +1,13 @@
-import React, { useState } from 'react';
-import {
-  IconButton,
-  Popover,
-  Box,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
-  useTheme
-} from '@mui/material';
-import {
-  EmojiEmotions as EmojiIcon,
-  AccessTime as RecentIcon,
-  Search as SearchIcon
-} from '@mui/icons-material';
+import React from 'react';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
+import { Box, IconButton, Popover, Tab, Tabs, TextField, Typography, useTheme } from '@mui/material';
+import { EmojiEmotions as EmojiIcon, AccessTime as RecentIcon, Search as SearchIcon } from '@mui/icons-material';
 
 const EmojiPicker = ({ onEmojiSelect }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentTab, setCurrentTab] = useState(0);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentTab, setCurrentTab] = React.useState(0);
   const theme = useTheme();
 
   const handleClick = (event) => {
@@ -49,14 +36,17 @@ const EmojiPicker = ({ onEmojiSelect }) => {
     setCurrentTab(newValue);
   };
 
+  const open = Boolean(anchorEl);
+  const id = open ? 'emoji-popover' : undefined;
+
   return (
     <>
       <IconButton onClick={handleClick} size="small">
         <EmojiIcon />
       </IconButton>
-      
       <Popover
-        open={Boolean(anchorEl)}
+        id={id}
+        open={open}
         anchorEl={anchorEl}
         onClose={handleClose}
         anchorOrigin={{

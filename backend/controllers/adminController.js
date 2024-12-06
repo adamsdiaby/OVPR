@@ -1,63 +1,61 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const User = require('../models/user');
+const Admin = require('../models/admin');
 
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
+        console.log('👉 Tentative de connexion admin:', email);
 
-        // Trouver l'utilisateur et inclure explicitement le mot de passe et le rôle
-        const user = await User.findOne({ email }).select('+password +role');
+        // Trouver l'admin
+        const admin = await Admin.findOne({ email });
         
-        if (!user) {
-            console.log('❌ Utilisateur non trouvé:', email);
+        if (!admin) {
+            console.log('❌ Admin non trouvé:', email);
             return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
         }
 
-        // Vérifier si l'utilisateur est un admin
-        if (user.role !== 'admin') {
-            console.log('❌ Tentative de connexion non-admin:', email);
-            return res.status(403).json({ message: 'Accès non autorisé' });
-        }
-
         // Vérifier le mot de passe
-        const isValidPassword = await bcrypt.compare(password, user.password);
+        const isValidPassword = await admin.comparePassword(password);
         if (!isValidPassword) {
             console.log('❌ Mot de passe invalide pour:', email);
             return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
         }
 
-        // Créer le token avec le rôle
+        // Créer le token
         const token = jwt.sign(
             { 
-                userId: user._id,
-                role: user.role // Inclure explicitement le rôle dans le token
+                id: admin._id,
+                email: admin.email,
+                role: admin.role,
+                permissions: admin.permissions
             },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
-        console.log('✅ Connexion admin réussie:', {
-            userId: user._id,
-            email: user.email,
-            role: user.role
-        });
+        // Mettre à jour la dernière connexion
+        admin.lastLogin = new Date();
+        await admin.save();
 
-        // Retourner la réponse
+        console.log('✅ Connexion admin réussie:', email);
+
+        // Retourner le token et les infos de l'admin
         res.json({
-            message: 'Connexion réussie',
             token,
-            user: {
-                id: user._id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-                role: user.role,
-                phone: user.phone
+            admin: {
+                id: admin._id,
+                email: admin.email,
+                nom: admin.nom,
+                prenom: admin.prenom,
+                role: admin.role,
+                permissions: admin.permissions,
+                lastLogin: admin.lastLogin
             }
         });
+
     } catch (error) {
-        console.error('❌ Erreur de connexion:', error);
+        console.error('❌ Erreur lors de la connexion:', error);
         res.status(500).json({ message: 'Erreur lors de la connexion' });
     }
 };

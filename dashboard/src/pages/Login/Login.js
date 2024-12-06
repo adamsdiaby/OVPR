@@ -11,62 +11,56 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Login = () => {
-  const navigate = useNavigate();
+  const { login, error: authError } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [acceptResponsibility, setAcceptResponsibility] = useState(false);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [localError, setLocalError] = useState(null);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    setLocalError(null); // Réinitialiser l'erreur lors de la modification
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation des champs
+    if (!formData.email || !formData.password) {
+      setLocalError("Veuillez remplir tous les champs");
+      return;
+    }
+
     if (!acceptResponsibility) {
-      setError('Veuillez accepter la déclaration de responsabilité');
+      setLocalError("Veuillez accepter vos responsabilités d'administrateur");
       return;
     }
 
     setLoading(true);
-    setError('');
+    setLocalError(null);
 
     try {
-      const response = await axios.post('http://localhost:3000/admin/login', formData);
-      const { token, admin } = response.data;
-      
-      localStorage.setItem('adminToken', token);
-      localStorage.setItem('adminRole', admin.role);
-      localStorage.setItem('adminPermissions', JSON.stringify(admin.permissions));
-      localStorage.setItem('adminId', admin._id);
-      
-      // Redirection basée sur le rôle et le statut
-      if (admin.status === 'en_attente') {
-        navigate('/pending-approval');
-      } else if (admin.role === 'super_admin') {
-        navigate('/admin-dashboard');
-      } else {
-        navigate('/dashboard');
+      const success = await login(formData);
+      if (!success) {
+        setLocalError("Échec de la connexion. Veuillez vérifier vos identifiants.");
       }
     } catch (error) {
-      setError(
-        error.response?.data?.message ||
-        'Une erreur est survenue lors de la connexion'
-      );
+      setLocalError(error.message || "Une erreur est survenue lors de la connexion");
     } finally {
       setLoading(false);
     }
   };
+
+  const error = localError || authError;
 
   return (
     <Container component="main" maxWidth="xs">
@@ -108,7 +102,12 @@ const Login = () => {
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
+          <Box 
+            component="form" 
+            onSubmit={handleSubmit} 
+            sx={{ mt: 1, width: '100%' }}
+            noValidate
+          >
             <TextField
               margin="normal"
               required
@@ -120,7 +119,8 @@ const Login = () => {
               autoFocus
               value={formData.email}
               onChange={handleChange}
-              sx={{ mb: 2 }}
+              error={!!error}
+              disabled={loading}
             />
             <TextField
               margin="normal"
@@ -133,38 +133,39 @@ const Login = () => {
               autoComplete="current-password"
               value={formData.password}
               onChange={handleChange}
-              sx={{ mb: 3 }}
+              error={!!error}
+              disabled={loading}
             />
-
             <FormControlLabel
               control={
                 <Checkbox
                   checked={acceptResponsibility}
-                  onChange={(e) => setAcceptResponsibility(e.target.checked)}
+                  onChange={(e) => {
+                    setAcceptResponsibility(e.target.checked);
+                    setLocalError(null);
+                  }}
                   color="primary"
+                  disabled={loading}
                 />
               }
-              label={
-                <Typography variant="body2" sx={{ color: '#4A5568' }}>
-                  Je comprends mes responsabilités en tant qu'administrateur et m'engage à respecter
-                  la confidentialité des données.
-                </Typography>
-              }
-              sx={{ mb: 2 }}
+              label="Je comprends mes responsabilités en tant qu'administrateur"
+              sx={{ mt: 2 }}
             />
-
             <Button
               type="submit"
               fullWidth
               variant="contained"
               sx={{
-                mt: 2,
+                mt: 3,
                 mb: 2,
-                py: 1.5,
-                backgroundColor: '#6B46C1',
+                height: 48,
+                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
                 '&:hover': {
-                  backgroundColor: '#553C9A',
+                  background: 'linear-gradient(45deg, #1976D2 30%, #00B4D8 90%)',
                 },
+                '&:disabled': {
+                  background: '#ccc',
+                }
               }}
               disabled={loading || !acceptResponsibility}
             >

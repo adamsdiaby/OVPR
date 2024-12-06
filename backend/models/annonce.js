@@ -9,12 +9,19 @@ const annonceSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    price: {
-        type: Number,
+    status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected', 'reported', 'lost', 'found', 'stolen', 'forgotten'],
+        default: 'pending',
         required: true
     },
     location: {
         type: String,
+        required: true
+    },
+    type: {
+        type: String,
+        enum: ['lost', 'found'],
         required: true
     },
     category: {
@@ -29,11 +36,6 @@ const annonceSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    status: {
-        type: String,
-        enum: ['active', 'inactive', 'signaled'],
-        default: 'active'
-    },
     createdAt: {
         type: Date,
         default: Date.now
@@ -41,7 +43,51 @@ const annonceSchema = new mongoose.Schema({
     updatedAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    moderatedAt: {
+        type: Date
+    },
+    moderatedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin'
+    },
+    rejectionReason: {
+        type: String
+    },
+    isSensitive: {
+        type: Boolean,
+        default: false
+    },
+    sensitiveReason: {
+        type: String
+    },
+    sensitiveMarkedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin'
+    },
+    notes: [{
+        content: String,
+        author: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        },
+        visibility: {
+            type: String,
+            enum: ['public', 'admin', 'law_enforcement'],
+            default: 'public'
+        }
+    }]
 });
 
-module.exports = mongoose.model('Annonce', annonceSchema);
+// Middleware pre-save pour mettre à jour updatedAt
+annonceSchema.pre('save', function(next) {
+    this.updatedAt = new Date();
+    next();
+});
+
+// Vérifier si le modèle existe déjà
+module.exports = mongoose.models.Annonce || mongoose.model('Annonce', annonceSchema);

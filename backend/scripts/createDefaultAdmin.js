@@ -20,13 +20,49 @@ const createDefaultAdmin = async () => {
         // Créer le nouvel admin
         const hashedPassword = await hashPassword();
         const admin = new Admin({
-            email: defaultAdmin.email,
+            ...defaultAdmin,
             password: hashedPassword,
-            role: defaultAdmin.role
+            permissions: {
+                annonces: {
+                    create: true,
+                    read: true,
+                    update: true,
+                    delete: true,
+                    validate: true
+                },
+                signalements: {
+                    read: true,
+                    process: true,
+                    delete: true
+                },
+                statistiques: {
+                    read: true,
+                    export: true
+                },
+                admins: {
+                    create: true,
+                    read: true,
+                    update: true,
+                    delete: true
+                },
+                alertes: {
+                    create: true,
+                    read: true,
+                    update: true,
+                    broadcast: true
+                },
+                biens: {
+                    recherche: true,
+                    declaration: true,
+                    modification: true
+                }
+            }
         });
 
         await admin.save();
         console.log('Administrateur par défaut créé avec succès');
+        console.log('Email:', defaultAdmin.email);
+        console.log('Mot de passe:', defaultAdmin.password);
 
     } catch (error) {
         console.error('Erreur lors de la création de l\'admin:', error);

@@ -1,0 +1,488 @@
+{
+	"info": {
+		"_postman_id": "your-collection-id",
+		"name": "OVPR API",
+		"description": "Collection pour l'API OVPR (Objets Volés Perdus Retrouvés)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.environment.set('TOKEN', jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{ADMIN_EMAIL}}\",\n    \"password\": \"{{ADMIN_PASSWORD}}\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/admin/login",
+							"host": ["{{BASE_URL}}"],
+							"path": ["admin", "login"]
+						},
+						"description": "Connexion administrateur"
+					}
+				}
+			]
+		},
+		{
+			"name": "Annonces",
+			"item": [
+				{
+					"name": "Créer une annonce",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"titre\": \"Test Annonce\",\n    \"description\": \"Description de test\",\n    \"type\": \"perdu\",\n    \"categorie\": \"electronique\",\n    \"date\": \"2024-01-01\",\n    \"lieu\": \"Campus\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/annonces",
+							"host": ["{{BASE_URL}}"],
+							"path": ["annonces"]
+						}
+					}
+				},
+				{
+					"name": "Lister les annonces",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{BASE_URL}}/annonces",
+							"host": ["{{BASE_URL}}"],
+							"path": ["annonces"]
+						}
+					}
+				},
+				{
+					"name": "Obtenir une annonce",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{BASE_URL}}/annonces/:id",
+							"host": ["{{BASE_URL}}"],
+							"path": ["annonces", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "annonce_id"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Modifier une annonce",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"titre\": \"Annonce modifiée\",\n    \"description\": \"Nouvelle description\",\n    \"status\": \"résolu\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/annonces/:id",
+							"host": ["{{BASE_URL}}"],
+							"path": ["annonces", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "annonce_id"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Supprimer une annonce",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{BASE_URL}}/annonces/:id",
+							"host": ["{{BASE_URL}}"],
+							"path": ["annonces", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "annonce_id"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Signalements",
+			"item": [
+				{
+					"name": "Créer un signalement",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"perdu\",\n    \"description\": \"Description de l'objet perdu\",\n    \"categorie\": \"electronique\",\n    \"date\": \"2024-01-01\",\n    \"lieu\": \"Campus\",\n    \"contact\": {\n        \"nom\": \"Doe\",\n        \"prenom\": \"John\",\n        \"email\": \"john.doe@example.com\",\n        \"telephone\": \"0123456789\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/signalements",
+							"host": ["{{BASE_URL}}"],
+							"path": ["signalements"]
+						}
+					}
+				},
+				{
+					"name": "Lister les signalements",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{BASE_URL}}/signalements",
+							"host": ["{{BASE_URL}}"],
+							"path": ["signalements"]
+						}
+					}
+				},
+				{
+					"name": "Obtenir un signalement",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{BASE_URL}}/signalements/:id",
+							"host": ["{{BASE_URL}}"],
+							"path": ["signalements", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "signalement_id"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Traiter un signalement",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"traité\",\n    \"commentaire\": \"Signalement traité avec succès\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/signalements/:id",
+							"host": ["{{BASE_URL}}"],
+							"path": ["signalements", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "signalement_id"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Liste des admins",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{BASE_URL}}/admin/users",
+							"host": ["{{BASE_URL}}"],
+							"path": ["admin", "users"]
+						}
+					}
+				},
+				{
+					"name": "Créer un admin",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"nouvel.admin@ovpr.fr\",\n    \"password\": \"MotDePasse123!\",\n    \"nom\": \"Admin\",\n    \"prenom\": \"Nouveau\",\n    \"role\": \"admin\",\n    \"permissions\": {\n        \"annonces\": {\n            \"create\": true,\n            \"read\": true,\n            \"update\": true,\n            \"delete\": false\n        },\n        \"signalements\": {\n            \"read\": true,\n            \"process\": true,\n            \"delete\": false\n        }\n    }\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/admin/users",
+							"host": ["{{BASE_URL}}"],
+							"path": ["admin", "users"]
+						}
+					}
+				},
+				{
+					"name": "Modifier un admin",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nom\": \"Admin Modifié\",\n    \"permissions\": {\n        \"annonces\": {\n            \"delete\": true\n        }\n    }\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/admin/users/:id",
+							"host": ["{{BASE_URL}}"],
+							"path": ["admin", "users", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "admin_id"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Changer le statut d'un admin",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"inactif\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/admin/users/:id/status",
+							"host": ["{{BASE_URL}}"],
+							"path": ["admin", "users", ":id", "status"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "admin_id"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{
+					"name": "Statistiques",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{BASE_URL}}/admin/dashboard/stats",
+							"host": ["{{BASE_URL}}"],
+							"path": ["admin", "dashboard", "stats"]
+						}
+					}
+				},
+				{
+					"name": "Annonces Récentes",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{BASE_URL}}/admin/dashboard/recent-annonces",
+							"host": ["{{BASE_URL}}"],
+							"path": ["admin", "dashboard", "recent-annonces"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

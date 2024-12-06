@@ -25,7 +25,8 @@ import {
   EmojiEmotions as EmojiIcon,
   AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
-import axios from 'axios';
+import API_ENDPOINTS, { createApiClient } from '../../config/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AdminChat = () => {
   const [messages, setMessages] = useState([]);
@@ -34,13 +35,12 @@ const AdminChat = () => {
   const [onlineAdmins, setOnlineAdmins] = useState([]);
   const messagesEndRef = useRef(null);
   const theme = useTheme();
+  const { user } = useAuth();
+  const apiClient = createApiClient(localStorage.getItem('token'));
 
   useEffect(() => {
-    // Charger les messages précédents
     fetchMessages();
-    // Se connecter au websocket pour les messages en temps réel
     initializeWebSocket();
-    // Charger les administrateurs en ligne
     fetchOnlineAdmins();
 
     const interval = setInterval(fetchOnlineAdmins, 30000);
@@ -53,12 +53,8 @@ const AdminChat = () => {
 
   const fetchMessages = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/admin/chat/messages', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      setMessages(response.data);
+      const data = await apiClient.get(API_ENDPOINTS.ADMIN_CHAT);
+      setMessages(data);
     } catch (error) {
       console.error('Erreur lors du chargement des messages:', error);
     }
@@ -66,19 +62,15 @@ const AdminChat = () => {
 
   const fetchOnlineAdmins = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/admin/online', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      setOnlineAdmins(response.data);
+      const data = await apiClient.get(API_ENDPOINTS.ADMIN_ONLINE);
+      setOnlineAdmins(data);
     } catch (error) {
       console.error('Erreur lors du chargement des admins en ligne:', error);
     }
   };
 
   const initializeWebSocket = () => {
-    const ws = new WebSocket('ws://localhost:3000/admin/chat');
+    const ws = new WebSocket(API_ENDPOINTS.ADMIN_CHAT_WEBSOCKET);
     
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
@@ -98,15 +90,13 @@ const AdminChat = () => {
     if (!newMessage.trim()) return;
 
     try {
-      await axios.post(
-        'http://localhost:3000/admin/chat/messages',
-        { content: newMessage },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('adminToken')}`
-          }
-        }
-      );
+      const message = {
+        content: newMessage.trim(),
+        senderId: user._id,
+        timestamp: new Date().toISOString()
+      };
+
+      await apiClient.post(API_ENDPOINTS.ADMIN_CHAT, message);
       setNewMessage('');
     } catch (error) {
       console.error('Erreur lors de l\'envoi du message:', error);
@@ -202,14 +192,14 @@ const AdminChat = () => {
             <ListItem
               alignItems="flex-start"
               sx={{
-                flexDirection: message.isCurrentUser ? 'row-reverse' : 'row',
+                flexDirection: message.senderId === user._id ? 'row-reverse' : 'row',
                 mb: 2
               }}
             >
               <ListItemAvatar>
                 <Avatar
                   sx={{
-                    bgcolor: message.isCurrentUser ? 
+                    bgcolor: message.senderId === user._id ? 
                       theme.palette.primary.main : 
                       theme.palette.secondary.main
                   }}
@@ -222,7 +212,7 @@ const AdminChat = () => {
                   <Box
                     sx={{
                       display: 'flex',
-                      justifyContent: message.isCurrentUser ? 'flex-end' : 'flex-start',
+                      justifyContent: message.senderId === user._id ? 'flex-end' : 'flex-start',
                       alignItems: 'center',
                       mb: 0.5
                     }}
@@ -231,7 +221,7 @@ const AdminChat = () => {
                       {message.sender.nom} {message.sender.prenom}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {formatTimestamp(message.createdAt)}
+                      {formatTimestamp(message.timestamp)}
                     </Typography>
                   </Box>
                 }
@@ -240,15 +230,15 @@ const AdminChat = () => {
                     elevation={0}
                     sx={{
                       p: 1.5,
-                      backgroundColor: message.isCurrentUser ? 
+                      backgroundColor: message.senderId === user._id ? 
                         theme.palette.primary.light : 
                         theme.palette.grey[100],
-                      color: message.isCurrentUser ? 
+                      color: message.senderId === user._id ? 
                         theme.palette.primary.contrastText : 
                         'inherit',
                       borderRadius: 2,
                       maxWidth: '80%',
-                      ml: message.isCurrentUser ? 'auto' : 0
+                      ml: message.senderId === user._id ? 'auto' : 0
                     }}
                   >
                     <Typography variant="body1">

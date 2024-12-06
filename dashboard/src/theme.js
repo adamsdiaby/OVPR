@@ -1,65 +1,67 @@
 import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#6B46C1', // violet
-      light: '#9F7AEA',
-      dark: '#553C9A',
-    },
-    secondary: {
-      main: '#ECC94B', // jaune
-      light: '#F6E05E',
-      dark: '#D69E2E',
-    },
-    background: {
-      default: '#F7FAFC',
-      paper: '#FFFFFF',
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontWeight: 600,
-      fontSize: '2rem',
-    },
-    h2: {
-      fontWeight: 600,
-      fontSize: '1.75rem',
-    },
-    h3: {
-      fontWeight: 600,
-      fontSize: '1.5rem',
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          textTransform: 'none',
+    palette: {
+        primary: {
+            main: '#6B46C1',
+            light: '#9B7EDB',
+            dark: '#4A2F8C',
         },
-        containedPrimary: {
-          '&:hover': {
-            backgroundColor: '#553C9A',
-          },
+        secondary: {
+            main: '#FF9800',
+            light: '#FFB74D',
+            dark: '#F57C00',
         },
-        containedSecondary: {
-          '&:hover': {
-            backgroundColor: '#D69E2E',
-          },
+        error: {
+            main: '#f44336',
+            light: '#e57373',
+            dark: '#d32f2f',
         },
-      },
+        success: {
+            main: '#4CAF50',
+            light: '#81C784',
+            dark: '#388E3C',
+        },
+        warning: {
+            main: '#FF9800',
+            light: '#FFB74D',
+            dark: '#F57C00',
+        },
+        itemStatus: {
+            stolen: '#6B46C1',
+            forgotten: '#FF9800',
+            lost: '#f44336',
+            found: '#4CAF50'
+        },
+        background: {
+            default: '#F4F6F8',
+            paper: '#FFFFFF'
+        },
+        text: {
+            primary: '#2D3748',
+            secondary: '#718096'
+        },
     },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        },
-      },
+    typography: {
+        fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
     },
-  },
+    components: {
+        MuiButton: {
+            styleOverrides: {
+                root: {
+                    borderRadius: 8,
+                    textTransform: 'none',
+                },
+            },
+        },
+        MuiCard: {
+            styleOverrides: {
+                root: {
+                    borderRadius: 12,
+                },
+            },
+        },
+    },
 });
 
 export default theme;

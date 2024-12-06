@@ -1,164 +1,251 @@
 import React, { useState } from 'react';
-import { Box, AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, useTheme, useMediaQuery } from '@mui/material';
+import {
+  Box,
+  Drawer,
+  AppBar,
+  Toolbar,
+  List,
+  Typography,
+  Divider,
+  IconButton,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Avatar,
+  Badge,
+  useTheme
+} from '@mui/material';
 import {
   Menu as MenuIcon,
+  ChevronLeft as ChevronLeftIcon,
   Dashboard as DashboardIcon,
   Announcement as AnnouncementIcon,
-  Flag as FlagIcon,
-  People as PeopleIcon,
-  BarChart as StatsIcon,
   Settings as SettingsIcon,
-  ExitToApp as LogoutIcon,
+  Security as SecurityIcon,
+  List as ListIcon,
+  Message as MessageIcon,
+  VerifiedUser as VerifiedUserIcon,
+  ExpandMore,
+  Assessment as AssessmentIcon,
+  History as HistoryIcon,
   Notifications as NotificationsIcon,
-  Language as LanguageIcon,
+  Build as BuildIcon,
+  Person as PersonIcon,
+  ExitToApp as LogoutIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import NotificationCenter from '../Notifications/NotificationCenter';
-import Tooltip from '@mui/material/Tooltip';
+import { styled } from '@mui/material/styles';
 
 const drawerWidth = 240;
+
+const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
+  ({ theme, open }) => ({
+    flexGrow: 1,
+    padding: theme.spacing(3),
+    transition: theme.transitions.create('margin', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    marginLeft: 0,
+    ...(open && {
+      transition: theme.transitions.create('margin', {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+      marginLeft: drawerWidth,
+    }),
+  }),
+);
+
+const DrawerHeader = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: theme.spacing(0, 1),
+  ...theme.mixins.toolbar,
+  justifyContent: 'flex-end',
+}));
 
 const menuItems = [
   { text: 'Tableau de bord', icon: <DashboardIcon />, path: '/admin/dashboard' },
   { text: 'Annonces', icon: <AnnouncementIcon />, path: '/admin/annonces' },
-  { text: 'Signalements', icon: <FlagIcon />, path: '/admin/signalements' },
-  { text: 'Utilisateurs', icon: <PeopleIcon />, path: '/admin/utilisateurs' },
-  { text: 'Statistiques', icon: <StatsIcon />, path: '/admin/statistiques' },
-  { text: 'Configuration', icon: <SettingsIcon />, path: '/admin/configuration' },
+  {
+    text: 'Police/Gendarmerie',
+    icon: <SecurityIcon />,
+    subItems: [
+      { text: 'Liste des comptes', path: '/admin/police/accounts' },
+      { text: 'Correspondance', path: '/admin/police/correspondence' },
+      { text: 'Vérifications', path: '/admin/police/verifications' }
+    ]
+  },
+  {
+    text: 'OUTILS',
+    icon: <BuildIcon />,
+    subItems: [
+      { text: 'Statistiques', icon: <AssessmentIcon />, path: '/admin/tools/statistics' },
+      { text: 'Messages', icon: <MessageIcon />, path: '/admin/tools/messages' },
+      { text: 'Historique', icon: <HistoryIcon />, path: '/admin/tools/history' },
+      { text: 'Notifications', icon: <NotificationsIcon />, path: '/admin/tools/notifications' }
+    ]
+  },
+  { text: 'Paramètres', icon: <SettingsIcon />, path: '/admin/settings' }
 ];
 
 const Layout = ({ children }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [open, setOpen] = useState(true);
+  const [notificationCount] = useState(5);
+  const [expandedMenu, setExpandedMenu] = useState(null);
 
   const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
+    setOpen(!open);
+  };
+
+  const handleMenuClick = (item) => {
+    if (item.subItems) {
+      setExpandedMenu(expandedMenu === item.text ? null : item.text);
+    } else if (item.path) {
+      navigate(item.path);
+    }
+  };
+
+  const handleSubMenuClick = (e, path) => {
+    e.stopPropagation(); // Empêche la propagation au parent
+    navigate(path);
+  };
+
+  const isMenuActive = (path) => {
+    return location.pathname === path;
+  };
+
+  const isSubMenuActive = (item) => {
+    return item.subItems?.some(subItem => location.pathname === subItem.path);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    navigate('/admin/login');
+    // Implémentez la logique de déconnexion ici
+    navigate('/login');
   };
 
-  const drawer = (
-    <Box>
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="h6" color="primary">OVPR Admin</Typography>
-      </Box>
-      <List>
-        {menuItems.map((item) => (
-          <ListItem
-            button
-            key={item.text}
-            onClick={() => navigate(item.path)}
-            selected={location.pathname === item.path}
-            sx={{
-              '&.Mui-selected': {
-                backgroundColor: theme.palette.primary.light,
-                color: theme.palette.primary.contrastText,
-                '& .MuiListItemIcon-root': {
-                  color: theme.palette.primary.contrastText,
-                },
-              },
-            }}
-          >
-            <ListItemIcon sx={{ color: location.pathname === item.path ? 'inherit' : theme.palette.text.primary }}>
-              {item.icon}
-            </ListItemIcon>
-            <ListItemText primary={item.text} />
-          </ListItem>
-        ))}
-        <ListItem button onClick={handleLogout}>
-          <ListItemIcon>
-            <LogoutIcon />
-          </ListItemIcon>
-          <ListItemText primary="Déconnexion" />
-        </ListItem>
-      </List>
-    </Box>
-  );
-
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <AppBar
         position="fixed"
         sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-          bgcolor: 'background.paper',
+          backgroundColor: 'white',
+          color: 'primary.main',
           boxShadow: 1,
+          zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
       >
         <Toolbar>
           <IconButton
             color="inherit"
-            edge="start"
+            aria-label="open drawer"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
+            edge="start"
           >
             <MenuIcon />
           </IconButton>
-          <Box sx={{ flexGrow: 1 }} />
-          <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
-            <NotificationCenter 
-              onNotificationClick={(notification) => {
-                if (notification.actionLink) {
-                  navigate(notification.actionLink, { state: notification.actionData });
-                }
-              }} 
-            />
-            <Tooltip title="Paramètres du compte">
-              <IconButton color="primary">
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
-            <IconButton color="primary">
-              <LanguageIcon />
-            </IconButton>
-          </Box>
+          <Box
+            component="img"
+            src="/logo.png"
+            alt="Logo"
+            sx={{ height: 40, mr: 2 }}
+          />
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            OVPR Dashboard
+          </Typography>
+          <IconButton color="inherit">
+            <Badge badgeContent={notificationCount} color="error">
+              <NotificationsIcon />
+            </Badge>
+          </IconButton>
+          <IconButton sx={{ ml: 2 }}>
+            <Avatar>
+              <PersonIcon />
+            </Avatar>
+          </IconButton>
         </Toolbar>
       </AppBar>
 
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-      >
-        <Drawer
-          variant={isMobile ? 'temporary' : 'permanent'}
-          open={isMobile ? mobileOpen : true}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile
-          }}
-          sx={{
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-              bgcolor: 'background.paper',
-              borderRight: '1px solid rgba(0, 0, 0, 0.12)',
-            },
-          }}
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-
-      <Box
-        component="main"
+      <Drawer
         sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: '64px',
-          bgcolor: 'background.default',
-          minHeight: '100vh',
+          width: drawerWidth,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+          },
         }}
+        variant="persistent"
+        anchor="left"
+        open={open}
       >
+        <DrawerHeader>
+          <IconButton onClick={handleDrawerToggle}>
+            <ChevronLeftIcon />
+          </IconButton>
+        </DrawerHeader>
+        <Divider />
+        <List>
+          {menuItems.map((item) => (
+            <React.Fragment key={item.text}>
+              <ListItem
+                button
+                onClick={() => handleMenuClick(item)}
+                sx={{
+                  bgcolor: (isMenuActive(item.path) || isSubMenuActive(item)) ? 'action.selected' : 'inherit'
+                }}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} />
+                {item.subItems && (
+                  <ExpandMore 
+                    sx={{ 
+                      transform: expandedMenu === item.text ? 'rotate(180deg)' : 'none',
+                      transition: '0.3s'
+                    }} 
+                  />
+                )}
+              </ListItem>
+              {item.subItems && expandedMenu === item.text && (
+                <List component="div" disablePadding>
+                  {item.subItems.map((subItem) => (
+                    <ListItem
+                      key={subItem.text}
+                      button
+                      onClick={(e) => handleSubMenuClick(e, subItem.path)}
+                      sx={{
+                        pl: 4,
+                        bgcolor: isMenuActive(subItem.path) ? 'action.selected' : 'inherit'
+                      }}
+                    >
+                      <ListItemIcon>{subItem.icon}</ListItemIcon>
+                      <ListItemText primary={subItem.text} />
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+            </React.Fragment>
+          ))}
+        </List>
+        <Divider sx={{ bgcolor: 'rgba(255, 255, 255, 0.12)' }} />
+        <List>
+          <ListItem button onClick={handleLogout}>
+            <ListItemIcon>
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText primary="Déconnexion" />
+          </ListItem>
+        </List>
+      </Drawer>
+
+      <Main open={open}>
+        <DrawerHeader />
         {children}
-      </Box>
+      </Main>
     </Box>
   );
 };

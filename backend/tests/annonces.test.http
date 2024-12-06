@@ -1,0 +1,111 @@
+### Variables globales
+@baseUrl = http://localhost:3000/api
+@token = votre_token_jwt_ici
+
+### 1. Créer un compte utilisateur
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@example.com",
+    "password": "Test123!",
+    "phone": "+225 0123456789"
+}
+
+### 2. Se connecter pour obtenir un token
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "john.doe@example.com",
+    "password": "Test123!"
+}
+
+### 3. Créer une nouvelle annonce (iPhone perdu)
+POST {{baseUrl}}/annonces
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+Authorization: Bearer {{token}}
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="title"
+
+iPhone 13 Pro perdu à Cocody
+------WebKitFormBoundary
+Content-Disposition: form-data; name="description"
+
+iPhone 13 Pro Max couleur graphite perdu dans le quartier de Cocody, près de l'université. Une récompense est offerte.
+------WebKitFormBoundary
+Content-Disposition: form-data; name="status"
+
+lost
+------WebKitFormBoundary
+Content-Disposition: form-data; name="location"
+
+Cocody, Abidjan
+------WebKitFormBoundary
+Content-Disposition: form-data; name="category"
+
+telephone
+------WebKitFormBoundary
+Content-Disposition: form-data; name="contact"
+
++225 0123456789
+------WebKitFormBoundary
+Content-Disposition: form-data; name="price"
+
+500000
+------WebKitFormBoundary
+Content-Disposition: form-data; name="currency"
+
+XOF
+------WebKitFormBoundary
+Content-Disposition: form-data; name="specificFields"
+
+{
+    "imei": "123456789012345",
+    "marque": "Apple",
+    "modele": "iPhone 13 Pro Max"
+}
+------WebKitFormBoundary
+Content-Disposition: form-data; name="images"; filename="iphone.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/your/iphone.jpg
+------WebKitFormBoundary--
+
+### 4. Récupérer toutes les annonces
+GET {{baseUrl}}/annonces
+
+### 5. Rechercher des annonces avec filtres
+GET {{baseUrl}}/annonces?category=telephone&status=lost&search=iphone
+
+### 6. Obtenir les statistiques
+GET {{baseUrl}}/annonces/stats
+
+### 7. Obtenir une annonce spécifique
+GET {{baseUrl}}/annonces/annonce_id_ici
+
+### 8. Mettre à jour une annonce
+PUT {{baseUrl}}/annonces/annonce_id_ici
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+Authorization: Bearer {{token}}
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="title"
+
+iPhone 13 Pro RETROUVÉ à Cocody
+------WebKitFormBoundary
+Content-Disposition: form-data; name="status"
+
+found
+------WebKitFormBoundary--
+
+### 9. Supprimer une annonce
+DELETE {{baseUrl}}/annonces/annonce_id_ici
+Authorization: Bearer {{token}}
+
+### 10. Obtenir les annonces de l'utilisateur connecté
+GET {{baseUrl}}/annonces/user/annonces
+Authorization: Bearer {{token}}

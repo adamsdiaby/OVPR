@@ -19,17 +19,21 @@ import {
 import {
   Send as SendIcon,
   Search as SearchIcon,
-  MoreVert as MoreVertIcon,
-  Download as DownloadIcon,
-  Reply as ReplyIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
   EmojiEmotions as EmojiIcon,
-  PushPinIcon
+  AttachFile as AttachFileIcon,
+  Image as ImageIcon,
+  PictureAsPdf as PdfIcon,
+  InsertDriveFile as FileIcon,
+  Close as CloseIcon,
+  PushPin as PushPinIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import EmojiPicker from './EmojiPicker';
+import MessageFilters from './MessageFilters';
+import useWebSocket from '../../hooks/useWebSocket';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNotification } from '../../contexts/NotificationContext';
+import MentionSystem, { MentionText } from './MentionSystem';
 import FileUpload from './FileUpload';
 import ChatSearch from './ChatSearch';
 import MessageReactions from './MessageReactions';
@@ -37,13 +41,8 @@ import TypingIndicator from './TypingIndicator';
 import PinnedMessages from './PinnedMessages';
 import OnlineUsers from './OnlineUsers';
 import ChatStats from './ChatStats';
-import useWebSocket from '../../hooks/useWebSocket';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotification } from '../../contexts/NotificationContext';
 import debounce from 'lodash.debounce';
-import MessageFilters from './MessageFilters';
 import ConnectionHistory from './ConnectionHistory';
-import { MentionSystem, MentionText } from './MentionSystem';
 import MediaPreview from './MediaPreview';
 
 const ChatWindow = ({ roomId }) => {

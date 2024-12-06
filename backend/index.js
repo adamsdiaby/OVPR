@@ -1,79 +1,101 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
 const dotenv = require('dotenv');
-const path = require('path');
-const http = require('http');
+const cors = require('cors');
 const bodyParser = require('body-parser');
 
-// Services
-const notificationService = require('./services/notificationService');
-
 // Import des routes
-const userRoutes = require('./routes/userRoutes');
+const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/admin');
 const annonceRoutes = require('./routes/annonceRoutes');
 const signalementRoutes = require('./routes/signalementRoutes');
-const adminRoutes = require('./routes/admin');
 const notificationsRoutes = require('./routes/notifications');
+const statisticsRoutes = require('./routes/statisticsRoutes');
+const userRoutes = require('./routes/userRoutes');
 const chatRoomsRoutes = require('./routes/chatRooms');
 const lawEnforcementRoutes = require('./routes/lawEnforcement');
-const statisticsRoutes = require('./routes/statisticsRoutes');
 
 dotenv.config();
 const app = express();
-const server = http.createServer(app);
+
+// Configuration CORS
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Authorization'],
+    credentials: true
+};
+
+// Middleware
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Logger middleware
 app.use((req, res, next) => {
-    console.log(`📨 ${req.method} ${req.url}`);
-    console.log('Headers:', req.headers);
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${req.method} ${req.url}`);
+    if (req.method !== 'OPTIONS') {
+        console.log('Body:', req.body);
+    }
     next();
 });
 
-// Configuration CORS détaillée
-app.use(cors({
-    origin: ['http://localhost:3001', 'http://localhost:3002'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    preflightContinue: false,
-    optionsSuccessStatus: 204
-}));
-
-app.use(bodyParser.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Connection à MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ovpr', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('✅ Connecté à MongoDB Atlas avec succès!'))
-.catch(err => console.error('❌ Erreur de connexion MongoDB:', err));
-
-// Routes API publiques
-app.use('/api/users', userRoutes);
-app.use('/api/annonces', annonceRoutes);
-app.use('/api/signalements', signalementRoutes);
-
-// Routes Admin
+// Routes
+app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
-app.use('/admin/annonces', annonceRoutes);
-app.use('/admin/signalements', signalementRoutes);
-app.use('/admin/statistiques', statisticsRoutes);
-app.use('/admin/notifications', notificationsRoutes);
-app.use('/admin/chat', chatRoomsRoutes);
+app.use('/annonces', annonceRoutes);
+app.use('/signalements', signalementRoutes);
+app.use('/notifications', notificationsRoutes);
+app.use('/statistics', statisticsRoutes);
+app.use('/users', userRoutes);
+app.use('/chat', chatRoomsRoutes);
 app.use('/law-enforcement', lawEnforcementRoutes);
 
-// Gestion des erreurs globale
+// Route de test
+app.get('/test', (req, res) => {
+    res.json({ message: 'API is working!' });
+});
+
+// Error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Une erreur est survenue!');
+    console.error('Error:', err);
+    res.status(500).json({ 
+        message: 'Une erreur est survenue',
+        error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
+    });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-});
+// Connexion MongoDB et démarrage du serveur
+console.log('Tentative de connexion à MongoDB...');
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => {
+        console.log('Connected to MongoDB');
+        
+        // Afficher les routes disponibles
+        console.log('\nRoutes disponibles :');
+        app._router.stack.forEach((middleware) => {
+            if (middleware.route) {
+                console.log(`${middleware.route.path} [${Object.keys(middleware.route.methods).join(', ')}]`);
+            } else if (middleware.name === 'router') {
+                console.log(`\nRouter ${middleware.regexp}:`);
+                middleware.handle.stack.forEach((handler) => {
+                    if (handler.route) {
+                        console.log(`${handler.route.path} [${Object.keys(handler.route.methods).join(', ')}]`);
+                    }
+                });
+            }
+        });
 
-module.exports = { app, server };
+        // Démarrer le serveur
+        const PORT = process.env.PORT || 3000;
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+            console.log('\nCORS configuration:', corsOptions);
+        });
+    })
+    .catch(err => {
+        console.error('MongoDB connection error:', err);
+        process.exit(1);
+    });

@@ -3,7 +3,6 @@ import {
   Badge,
   IconButton,
   Menu,
-  MenuItem,
   Typography,
   Box,
   Divider,
@@ -22,34 +21,52 @@ import {
   Block as RejectIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
-import axios from 'axios';
+import { createApiClient } from '../../config/api';
 
 const NotificationCenter = ({ onNotificationClick }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
   const theme = useTheme();
 
   const fetchNotifications = useCallback(async () => {
+    if (loading) return; // Éviter les appels multiples
+    
     try {
-      const response = await axios.get('http://localhost:3000/admin/notifications', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      setNotifications(response.data);
-      setUnreadCount(response.data.filter(notif => !notif.read).length);
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) return; // Ne pas faire l'appel si pas de token
+      
+      const apiClient = createApiClient(token);
+      const response = await apiClient.get('/admin/notifications');
+      setNotifications(response.notifications || []);
+      setUnreadCount((response.notifications || []).filter(notif => !notif.read).length);
     } catch (error) {
       console.error('Erreur lors de la récupération des notifications:', error);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [loading]);
 
   useEffect(() => {
+    let interval;
+    
+    // Première récupération
     fetchNotifications();
-    // Rafraîchir toutes les 30 secondes
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [fetchNotifications]);
+    
+    // Mettre en place l'intervalle seulement si le composant est monté
+    interval = setInterval(() => {
+      fetchNotifications();
+    }, 30000); // 30 secondes
+    
+    // Nettoyer l'intervalle lors du démontage
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [fetchNotifications]); // Ajout de fetchNotifications dans les dépendances useEffect
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -62,15 +79,9 @@ const NotificationCenter = ({ onNotificationClick }) => {
   const handleNotificationClick = async (notification) => {
     try {
       // Marquer comme lu
-      await axios.put(
-        `http://localhost:3000/admin/notifications/${notification._id}/read`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('adminToken')}`
-          }
-        }
-      );
+      const token = localStorage.getItem('token');
+      const apiClient = createApiClient(token);
+      await apiClient.put(`/admin/notifications/${notification._id}/read`);
       
       // Mettre à jour l'interface
       setNotifications(prev =>
@@ -94,15 +105,9 @@ const NotificationCenter = ({ onNotificationClick }) => {
 
   const handleClearAll = async () => {
     try {
-      await axios.put(
-        'http://localhost:3000/admin/notifications/read-all',
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('adminToken')}`
-          }
-        }
-      );
+      const token = localStorage.getItem('token');
+      const apiClient = createApiClient(token);
+      await apiClient.put('/admin/notifications/read-all');
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {
@@ -204,7 +209,14 @@ const NotificationCenter = ({ onNotificationClick }) => {
         <Divider />
         
         <List sx={{ p: 0 }}>
-          {notifications.length === 0 ? (
+          {loading ? (
+            <ListItem>
+              <ListItemText
+                primary="Chargement..."
+                sx={{ textAlign: 'center', color: 'text.secondary' }}
+              />
+            </ListItem>
+          ) : notifications.length === 0 ? (
             <ListItem>
               <ListItemText
                 primary="Aucune notification"
